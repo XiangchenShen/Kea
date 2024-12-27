@@ -61,7 +61,7 @@ class MainPath:
     function = attr.ib()
 
     # the interaction steps (events) in the main path
-    path: List[str] = attr.ib()  
+    mainpath_tree = attr.ib()  
 
 
 class KeaTestElements:

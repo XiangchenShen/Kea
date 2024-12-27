@@ -1,3 +1,4 @@
+import ast
 import inspect
 from typing import Callable, Any, Union, TYPE_CHECKING
 from .kea import Rule, MainPath, Initializer
@@ -93,9 +94,11 @@ def mainPath():
             source_code = inspect.getsource(f)
             code_lines = [line.strip() for line in source_code.splitlines() if line.strip()]
             code_lines = [line for line in code_lines if not line.startswith('def ') and not line.startswith('@') and not line.startswith('#')]
-            return code_lines
+            source_code = "\n".join(line.lstrip() for line in code_lines)
+            mainpath_tree = ast.parse(source_code)
+            return mainpath_tree
 
-        main_path = MainPath(function=f, path=mainpath_wrapper())
+        main_path = MainPath(function=f, mainpath_tree=mainpath_wrapper())
         setattr(mainpath_wrapper, MAINPATH_MARKER, main_path)
         return mainpath_wrapper
 

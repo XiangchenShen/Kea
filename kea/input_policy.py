@@ -5,7 +5,7 @@ import random
 import copy
 import re
 import time
-from .utils import Time, generate_report
+from .utils import Time, generate_report, FunctionCallVisitor
 from abc import abstractmethod
 from .input_event import (
     KEY_RotateDeviceToPortraitEvent,
@@ -494,17 +494,40 @@ class GuidedPolicy(KeaInputPolicy):
         self.last_random_text = None
         self.last_rotate_events = KEY_RotateDeviceToPortraitEvent
 
+    def extract_mainpath_list(self, mainpath_tree):
+        attrs = {}
+        event = ""
+        arg = ""
+        event_str_list = []
+        for mainpath_event in mainpath_tree:
+            attrs = mainpath_event['attrs']
+            print(attrs)
+            event = mainpath_event['event']
+            arg = mainpath_event['arg']
+            event_str = "d"
+            if len(attrs):
+                event_str = event_str + "("
+                for key, value in attrs:
+                    event_str = event_str + key + ":" + value + ","
+                event_str[-1] = ")"
+            print(event_str)
+
+
+
     def select_main_path(self):
         if len(self.kea.all_mainPaths) == 0:
             self.logger.error("No mainPath")
             return
         self.main_path = random.choice(self.kea.all_mainPaths)
         # self.path_func, self.main_path =  self.kea.parse_mainPath(self.main_path)
-        self.path_func, self.main_path = self.main_path.function, self.main_path.path
+        self.path_func, self.mainpath_tree = self.main_path.function, self.main_path.mainpath_tree
+        visitor = FunctionCallVisitor()
+        visitor.visit(self.mainpath_tree)
+        self.main_path = visitor.calls
         self.logger.info(
             f"Select the {len(self.main_path)} steps mainPath function: {self.path_func}"
         )
-        self.main_path_list = copy.deepcopy(self.main_path)
+        self.main_path_list = self.extract_mainpath_list(self.main_path)
         self.max_number_of_events_that_try_to_find_event_on_main_path = min(
             10, len(self.main_path)
         )
